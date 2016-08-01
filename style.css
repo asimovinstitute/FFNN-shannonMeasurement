@@ -1,0 +1,27 @@
+/*@font-face {
+	
+	font-family: Sleek;
+	src: url(Walkway_Semibold.ttf);
+	
+}*/
+
+body {
+	
+	position: absolute;
+	top: 0;
+	left: 0;
+	
+	width: 100%;
+	margin: 0;
+	padding: 50px;
+	box-sizing: border-box;
+	
+	background: #333;
+	
+	white-space: pre;
+	text-align: left;
+	word-wrap: break-word;
+	font: 20px monospace;
+	color: #cf6;
+	
+}
