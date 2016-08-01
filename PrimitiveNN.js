@@ -46,15 +46,9 @@ function buildBrain (layers) {
 	
 }
 
-function activate (x) {
+function sigmoid (x) {
 	
 	return 1 / (1 + Math.exp(-x));
-	// return 0.1 * Math.sqrt(Math.abs(x)) * (x / Math.abs(x));
-	// return 0.5 * x + Math.sin(x);
-	
-	// var y = Math.exp(2 * x);
-	// 
-	// return (y - 1) / (y + 1);
 	
 }
 
@@ -82,8 +76,7 @@ function feedForward (input) {
 				
 			}
 			
-			// cells[a][b].value = activate(sum);
-			cells[a][b].value = (a == cells.length - 1) ? sum : activate(sum);
+			cells[a][b].value = (a == cells.length - 1) ? sum : sigmoid(sum);
 			
 		}
 		
@@ -154,7 +147,7 @@ function ask (input) {
 	
 	for (var a = 0; a < cells[cells.length - 1].length; a++) {
 		
-		ret.push(Math.round(10000 * cells[cells.length - 1][a].value) / 10000);
+		ret.push(cells[cells.length - 1][a].value);
 		
 	}
 	
@@ -162,61 +155,18 @@ function ask (input) {
 	
 }
 
-function traceNetwork (callName) {
+function measureShannon () {
 	
-	var s = "";
-	// var s = "####################\n" + callName + "\n####################\n";
-	
-	var precision = 6;
+	var possibleStates = 0;
+	var counts = [];
 	
 	for (var a = 0; a < cells.length; a++) {
 		
-		for (var b = 0; b < cells[a].length; b++) {
-			
-			s += "--- " + a + " X " + b;
-			
-			if (a == cells.length - 1) s += " output";
-			else if (cells[a][b].bias) s += " bias";
-			if (a == 0) s += " input";
-			
-			s += "\nv " + ("" + cells[a][b].value).slice(0, precision);
-			
-			if (cells[a][b].weights) {
-				
-				s += "\nw";
-				
-				for (var c = 0; c < cells[a][b].weights.length; c++) {
-					
-					s += " " + ("" + cells[a][b].weights[c]).slice(0, precision);
-					
-				}
-				
-				s += "\nd";
-				
-				for (var c = 0; c < cells[a][b].lastWeights.length; c++) {
-					
-					s += " " + ("" + cells[a][b].lastWeights[c]).slice(0, precision);
-					
-				}
-				
-				s += "\ne " + ("" + cells[a][b].error).slice(0, precision);
-				
-			}
-			
-			s += "\n";
-			
-		}
+		possibleStates += cells[a].length;
 		
 	}
 	
-	Art.doWrite(0, s);
-	
-}
-
-function measureShannon () {
-	
-	var possibleStates = 16;
-	var counts = [];
+	possibleStates = Math.pow(2, possibleStates);
 	
 	for (var a = 0; a < possibleStates; a++) {
 		
@@ -247,10 +197,26 @@ function measureShannon () {
 function storeSample () {
 	
 	// store the sample as binary
-	sampleData.push(Math.round(ask([0, 0])[0]) * 1 +
-					Math.round(ask([0, 1])[0]) * 2 +
-					Math.round(ask([1, 0])[0]) * 4 +
-					Math.round(ask([1, 1])[0]) * 8);
+	// sampleData.push(Math.round(ask([0, 0])[0]) * 1 +
+	// 				Math.round(ask([0, 1])[0]) * 2 +
+	// 				Math.round(ask([1, 0])[0]) * 4 +
+	// 				Math.round(ask([1, 1])[0]) * 8);
+	
+	var value = 0;
+	var c = 0;
+	
+	for (var a = 0; a < cells.length; a++) {
+		
+		for (var b = 0; b < cells[a].length; b++) {
+			
+			c++;
+			value += (cells[a][b].value > 0.5 ? 1 : 0) * Math.pow(2, c);
+			
+		}
+		
+	}
+	// console.log(value);
+	sampleData.push(value);
 	
 }
 
@@ -258,17 +224,25 @@ Stecy.setup = function () {
 	
 	Art.title = "PrimitiveNN";
 	
+	Art.width = 1000;
+	Art.height = 500;
+	Art.useCanvas = true;
+	Art.stretch = 2;
+	
 	Input.mouseDefaultEnabled = true;
 	
 };
 
 Art.ready = function () {
 	
-	momentum = 0.6;
-	learningRate = 0.1;
-	iterations = 100000;
+	for (var a = 0; a < 30; a++) Art.doWrite(0, "\n");
 	
-	buildBrain([2, 10, 10, 1]);
+	learningRate = 0.01;
+	iterations = 300000;
+	
+	var graphPoints = [];
+	
+	buildBrain([2, 4, 4, 1]);
 	
 	for (var a = 0; a < iterations + 1; a++) {
 		
@@ -281,9 +255,10 @@ Art.ready = function () {
 		
 		storeSample();
 		
-		if (a % 100 == 0 && a > 0) {
+		if (a % 1000 == 0 && a > 0) {
 			
-			// Art.doWrite(0, measureShannon().toFixed(4) + (a == iterations ? "" : ", "));
+			Art.doWrite(0, measureShannon().toFixed(4) + (a == iterations ? "" : ", "));
+			graphPoints.push(measureShannon());
 			
 			sampleData = [];
 			
@@ -291,7 +266,32 @@ Art.ready = function () {
 		
 	}
 	
-	traceNetwork();
+	Art.canvas.strokeStyle = "#fff";
+	Art.canvas.lineWidth = 1;
+	Art.canvas.beginPath();
+	Art.canvas.rect(0, 0, Art.width, Art.height);
+	Art.canvas.stroke();
+	
+	var x = [];
+	
+	for (var a = 0; a < graphPoints.length; a++) {
+		
+		x.push(a);
+		
+	}
+	
+	Art.canvas.strokeStyle = "#fff";
+	Art.canvas.beginPath();
+	
+	for (var a = 0; a < x.length; a++) {
+		
+		Art.canvas.lineTo(Art.width * (a / x.length), Art.height - graphPoints[a] * Art.height);
+		
+	}
+	
+	Art.canvas.stroke();
+	
+	// traceNetwork();
 	
 	// Art.doWrite(0, "\n\n");
 	// Art.doWrite(0, "0, 0 > " + ask([0, 0]).join(", ") + "\n");
