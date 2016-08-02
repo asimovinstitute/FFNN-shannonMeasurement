@@ -12,15 +12,23 @@ body {
 	left: 0;
 	
 	width: 100%;
+	height: 100%;
 	margin: 0;
-	padding: 50px;
+	padding: 0;
 	box-sizing: border-box;
 	
 	background: #fff;
 	
-	white-space: pre;
+	white-space: pre-wrap;
 	text-align: left;
 	font: 20px monospace;
 	color: #000;
+	
+}
+
+div {
+	
+	position: absolute;
+	top: 100%;
 	
 }

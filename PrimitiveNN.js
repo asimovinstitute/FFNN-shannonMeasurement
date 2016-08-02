@@ -4,12 +4,12 @@ var layerSizesWithBias = [];
 var possibleStates = 0;
 
 // parameters
-var runs = 200;
+var runs = 50;
 var numGraphLines = 20;
-var shannonInterval = 100;
-var iterations = 20000;
+var shannonInterval = 200;
+var iterations = 50000;
 var learningRate = 0.1;
-var layerSizes = [2, 2, 1];
+var layerSizes = [3, 3, 1];
 var normalised = false;
 
 function buildBrain () {
@@ -205,7 +205,7 @@ function storeSample () {
 	var value = 0;
 	var c = -1;
 	
-	for (var a = 0; a < cells.length; a++) {
+	for (var a = 1; a < cells.length; a++) {
 		
 		for (var b = 0; b < cells[a].length; b++) {
 			
@@ -226,9 +226,10 @@ Stecy.setup = function () {
 	
 	Art.title = "PrimitiveNN";
 	
-	Art.width = 1000;
-	Art.height = 500;
+	// Art.width = 1000;
+	// Art.height = 500;
 	Art.useCanvas = true;
+	Art.fillWindow = true;
 	Art.stretch = 2;
 	
 	Input.mouseDefaultEnabled = true;
@@ -237,7 +238,7 @@ Stecy.setup = function () {
 
 Art.ready = function () {
 	
-	for (var a = 0; a < 30; a++) Art.doWrite(0, "\n");
+	Art.doPlace(0, 1, "div");
 	
 	var graphPoints = [];
 	
@@ -273,7 +274,12 @@ Art.ready = function () {
 			
 			if (a % shannonInterval == 0 && a > 0) {
 				
-				Art.doWrite(0, measureShannon().toFixed(4) + (a == iterations ? "" : ", "));
+				// only write graph data to the page on the last run
+				if (c == runs - 1) {
+					
+					Art.doWrite(1, measureShannon().toFixed(4) + (a == iterations ? "" : ", "));
+					
+				}
 				
 				graphPoints[a / shannonInterval - 1] += measureShannon() / runs;
 				
@@ -284,8 +290,6 @@ Art.ready = function () {
 		}
 		
 	}
-	
-	sanityCheck();
 	
 	Art.canvas.strokeStyle = "#ccc";
 	Art.canvas.lineWidth = 1;
@@ -335,56 +339,41 @@ Art.ready = function () {
 	
 	Art.canvas.stroke();
 	
+	sanityCheck();
 	
 };
 
 function sanityCheck () {
 	
-	Art.doWrite(0, "\n\n");
-	Art.doWrite(0, "0, 0 > " + ask([0, 0])[0].toFixed(2) + "\n");
-	Art.doWrite(0, "0, 1 > " + ask([0, 1])[0].toFixed(2) + "\n");
-	Art.doWrite(0, "1, 0 > " + ask([1, 0])[0].toFixed(2) + "\n");
-	Art.doWrite(0, "1, 1 > " + ask([1, 1])[0].toFixed(2) + "\n");
+	// Art.doWrite(0, "\n\n");
+	
+	// all possible inputs in all cells but the bias cell from the input layer, so 2 ^ n where n is the number of input cells
+	for (var b = 0; b < Math.pow(2, cells[0].length - 1); b++) {
+		
+		var binary = b.toString(2);
+		
+		// add zeros to the start of the string, to turn 10 into 0010 if there are four input neurons
+		while (binary.length < cells[0].length - 1) binary = "0" + binary;
+		
+		var binaryArray = [];
+		var xorSum = 0;
+		
+		for (var a = 0; a < binary.length; a++) {
+			
+			// putting a plus sign in front of a string converts it to a number
+			// se we turn the binary string into an array of numbers (ints, in this case)
+			binaryArray[a] = +binary.charAt(a);
+			xorSum += binaryArray[a];
+			
+		}
+		
+		xorSum = xorSum == 1;
+		
+		// the neural network can have multiple outputs, so it returns an array, hence the [0] to get the first cell/neuron value at the end
+		var result = Math.round(ask(binaryArray)[0]);
+		
+		Art.doWrite(1, "\n" + binary + " yields " + result + (xorSum == result ? " correct" : " incorrect") + " (" + ask(binaryArray)[0].toFixed(5) + ")");
+		
+	}
 	
 }
-
-// function shannonFromData (data, options, base) {
-// 	
-// 	var counts = [];
-// 	
-// 	for (var a = 0; a < options; a++) {
-// 		
-// 		counts.push(0);
-// 		
-// 	}
-// 	
-// 	for (var a = 0; a < data.length; a++) {
-// 		
-// 		counts[data[a]]++;
-// 		
-// 	}
-// 	
-// 	var shannonEntropy = 0;
-// 	
-// 	for (var a = 0; a < options; a++) {
-// 		
-// 		if (counts[a] == 0) continue;
-// 		
-// 		shannonEntropy -= (counts[a] / data.length) * (Math.log(counts[a] / data.length) / Math.log(base));
-// 		
-// 	}
-// 	
-// 	return shannonEntropy;
-// 	
-// }
-// 
-// var dat = [];
-// 
-// for (var a = 0; a < 100000; a++) {
-// 	
-// 	// dat.push(Math.random() < 0.5 ? 1 : 0);
-// 	dat.push(Math.floor(Math.random() * 32));
-// 	
-// }
-// 
-// console.log(shannonFromData(dat, 32, 10));
