@@ -1,8 +1,10 @@
-var iterations = 1;
+var shannonInterval = 0;
+var iterations = 0;
 var cells = [];
 var momentum = 0;
 var sampleData = [];
 var learningRate = 0;
+var possibleStates = 0;
 
 function buildBrain (layers) {
 	
@@ -95,7 +97,6 @@ function backpropagate (targets) {
 		cell = cells[cells.length - 1][a];
 		
 		cell.error = targets[a] - cell.value;
-		// cell.error = cell.value * (1 - cell.value) * (targets[a] - cell.value);
 		
 	}
 	
@@ -157,16 +158,7 @@ function ask (input) {
 
 function measureShannon () {
 	
-	var possibleStates = 0;
 	var counts = [];
-	
-	for (var a = 0; a < cells.length; a++) {
-		
-		possibleStates += cells[a].length;
-		
-	}
-	
-	possibleStates = Math.pow(2, possibleStates);
 	
 	for (var a = 0; a < possibleStates; a++) {
 		
@@ -196,18 +188,12 @@ function measureShannon () {
 
 function storeSample () {
 	
-	// store the sample as binary
-	// sampleData.push(Math.round(ask([0, 0])[0]) * 1 +
-	// 				Math.round(ask([0, 1])[0]) * 2 +
-	// 				Math.round(ask([1, 0])[0]) * 4 +
-	// 				Math.round(ask([1, 1])[0]) * 8);
-	
 	var value = 0;
 	var c = 0;
 	
-	for (var a = 0; a < cells.length; a++) {
+	for (var a = 1; a < cells.length; a++) {
 		
-		for (var b = 0; b < cells[a].length; b++) {
+		for (var b = 0; b < cells[a].length - 1; b++) {
 			
 			c++;
 			value += (cells[a][b].value > 0.5 ? 1 : 0) * Math.pow(2, c);
@@ -215,7 +201,9 @@ function storeSample () {
 		}
 		
 	}
-	// console.log(value);
+	
+	if (!possibleStates) possibleStates = Math.pow(2, c);
+	
 	sampleData.push(value);
 	
 }
@@ -237,46 +225,74 @@ Art.ready = function () {
 	
 	for (var a = 0; a < 30; a++) Art.doWrite(0, "\n");
 	
-	learningRate = 0.01;
-	iterations = 300000;
+	learningRate = 0.1;
+	iterations = 50000;
+	shannonInterval = 100;
 	
+	var layers = [5, 5, 1];
 	var graphPoints = [];
 	
-	buildBrain([2, 4, 4, 1]);
+	for (var a = 0; a < iterations / shannonInterval; a++) {
+		
+		graphPoints[a] = 0;
+		
+	}
 	
-	for (var a = 0; a < iterations + 1; a++) {
+	for (var c = 0; c < 1; c++) {
 		
-		var v = [Math.round(Math.random()),
-				Math.round(Math.random())];
+		buildBrain(layers);
 		
-		feedForward(v);
-		
-		backpropagate([(v[0] && v[1]) || (!v[0] && !v[1])]);
-		
-		storeSample();
-		
-		if (a % 1000 == 0 && a > 0) {
+		for (var a = 0; a < iterations + 1; a++) {
 			
-			Art.doWrite(0, measureShannon().toFixed(4) + (a == iterations ? "" : ", "));
-			graphPoints.push(measureShannon());
+			var input = [];
+			var xor = 0;
 			
-			sampleData = [];
+			for (var b = 0; b < cells[0].length - 1; b++) {
+				
+				input[b] = Math.round(Math.random());
+				xor += input[b];
+				
+			}
+			
+			xor = xor == 1 ? 1 : 0;
+			
+			feedForward(input);
+			
+			backpropagate([xor]);
+			
+			storeSample();
+			
+			if (a % shannonInterval == 0 && a > 0) {
+				
+				Art.doWrite(0, measureShannon().toFixed(4) + (a == iterations ? "" : ", "));
+				
+				graphPoints[a / shannonInterval - 1] += measureShannon();
+				
+				sampleData = [];
+				
+			}
 			
 		}
 		
 	}
 	
-	Art.canvas.strokeStyle = "#fff";
+	Art.canvas.strokeStyle = "#09f";
 	Art.canvas.lineWidth = 1;
 	Art.canvas.beginPath();
-	Art.canvas.rect(0, 0, Art.width, Art.height);
+	Art.canvas.rect(0.5, 0.5, Art.width - 1, Art.height - 1);
 	Art.canvas.stroke();
+	Art.canvas.strokeStyle = "#fff";
 	
 	var x = [];
+	var maxValue = -1e10;
+	var minValue = 1e10;
 	
 	for (var a = 0; a < graphPoints.length; a++) {
 		
 		x.push(a);
+		
+		if (graphPoints[a] < minValue) minValue = graphPoints[a];
+		if (graphPoints[a] > maxValue) maxValue = graphPoints[a];
 		
 	}
 	
@@ -286,6 +302,7 @@ Art.ready = function () {
 	for (var a = 0; a < x.length; a++) {
 		
 		Art.canvas.lineTo(Art.width * (a / x.length), Art.height - graphPoints[a] * Art.height);
+		// Art.canvas.lineTo(Art.width * (a / x.length), Art.height - ((graphPoints[a] - minValue) / (maxValue - minValue)) * Art.height);
 		
 	}
 	
