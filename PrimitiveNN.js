@@ -1,41 +1,54 @@
-var shannonInterval = 0;
-var iterations = 0;
 var cells = [];
-var momentum = 0;
 var sampleData = [];
-var learningRate = 0;
+var layerSizesWithBias = [];
 var possibleStates = 0;
 
-function buildBrain (layers) {
+// parameters
+var runs = 20;
+var shannonInterval = 100;
+var iterations = 10000;
+var learningRate = 0.1;
+var layerSizes = [2, 2, 1];
+var normalised = false;
+
+function buildBrain () {
 	
-	for (var a = 0; a < layers.length - 1; a++) layers[a]++;
+	cells = [];
+	
+	for (var a = 0; a < layerSizes.length - 1; a++) {
+		
+		layerSizesWithBias[a] = layerSizes[a] + 1;
+		
+	}
+	
+	layerSizesWithBias[layerSizes.length - 1] = layerSizes[layerSizes.length - 1];
 	
 	cells[0] = [];
 	
-	for (var a = 0; a < layers[0]; a++) {
+	for (var a = 0; a < layerSizesWithBias[0]; a++) {
 		
-		cells[0][a] = {value:0, bias:a == layers[0] - 1};
+		cells[0][a] = {value:0, bias:a == layerSizesWithBias[0] - 1};
 		
 		if (cells[0][a].bias) cells[0][a].value = -1;
 		
 	}
 	
-	for (var a = 1; a < layers.length; a++) {
+	for (var a = 1; a < layerSizesWithBias.length; a++) {
 		
 		cells[a] = [];
 		
-		for (var b = 0; b < layers[a]; b++) {
+		for (var b = 0; b < layerSizesWithBias[a]; b++) {
 			
 			cells[a][b] = {error:0, value:0, weights:[], lastWeights:[], bias:false};
 			
-			if (a < layers.length - 1 && b == layers[a] - 1) {
+			if (a < layerSizesWithBias.length - 1 && b == layerSizesWithBias[a] - 1) {
 				
 				cells[a][b].bias = true;
 				cells[a][b].value = -1;
 				
 			}
 			
-			for (var c = 0; c < layers[a - 1]; c++) {
+			for (var c = 0; c < layerSizesWithBias[a - 1]; c++) {
 				
 				cells[a][b].weights[c] = Math.random();
 				cells[a][b].lastWeights[c] = 0;
@@ -56,7 +69,7 @@ function sigmoid (x) {
 
 function feedForward (input) {
 	
-	if (cells[0].length - 1 != input.length) console.log("incorrect ff data");
+	if (cells[0].length - 1 != input.length) throw new Error("incorrect ff data");
 	
 	for (var a = 0; a < input.length; a++) {
 		
@@ -90,7 +103,7 @@ function backpropagate (targets) {
 	
 	var cell;
 	
-	if (targets.length != cells[cells.length - 1].length) console.log("incorrect bp data");
+	if (targets.length != cells[cells.length - 1].length) throw new Error("incorrect bp data");
 	
 	for (var a = 0; a < cells[cells.length - 1].length; a++) {
 		
@@ -189,11 +202,11 @@ function measureShannon () {
 function storeSample () {
 	
 	var value = 0;
-	var c = 0;
+	var c = -1;
 	
-	for (var a = 1; a < cells.length; a++) {
+	for (var a = 0; a < cells.length; a++) {
 		
-		for (var b = 0; b < cells[a].length - 1; b++) {
+		for (var b = 0; b < cells[a].length; b++) {
 			
 			c++;
 			value += (cells[a][b].value > 0.5 ? 1 : 0) * Math.pow(2, c);
@@ -225,11 +238,6 @@ Art.ready = function () {
 	
 	for (var a = 0; a < 30; a++) Art.doWrite(0, "\n");
 	
-	learningRate = 0.1;
-	iterations = 50000;
-	shannonInterval = 100;
-	
-	var layers = [5, 5, 1];
 	var graphPoints = [];
 	
 	for (var a = 0; a < iterations / shannonInterval; a++) {
@@ -238,9 +246,9 @@ Art.ready = function () {
 		
 	}
 	
-	for (var c = 0; c < 1; c++) {
+	for (var c = 0; c < runs; c++) {
 		
-		buildBrain(layers);
+		buildBrain();
 		
 		for (var a = 0; a < iterations + 1; a++) {
 			
@@ -266,7 +274,7 @@ Art.ready = function () {
 				
 				Art.doWrite(0, measureShannon().toFixed(4) + (a == iterations ? "" : ", "));
 				
-				graphPoints[a / shannonInterval - 1] += measureShannon();
+				graphPoints[a / shannonInterval - 1] += measureShannon() / runs;
 				
 				sampleData = [];
 				
@@ -301,19 +309,70 @@ Art.ready = function () {
 	
 	for (var a = 0; a < x.length; a++) {
 		
-		Art.canvas.lineTo(Art.width * (a / x.length), Art.height - graphPoints[a] * Art.height);
-		// Art.canvas.lineTo(Art.width * (a / x.length), Art.height - ((graphPoints[a] - minValue) / (maxValue - minValue)) * Art.height);
+		if (normalised) {
+			
+			Art.canvas.lineTo(Art.width * (a / x.length), Art.height - ((graphPoints[a] - minValue) / (maxValue - minValue)) * Art.height);
+			
+		} else {
+			
+			Art.canvas.lineTo(Art.width * (a / x.length), Art.height - graphPoints[a] * Art.height);
+			
+		}
 		
 	}
 	
 	Art.canvas.stroke();
 	
-	// traceNetwork();
-	
-	// Art.doWrite(0, "\n\n");
-	// Art.doWrite(0, "0, 0 > " + ask([0, 0]).join(", ") + "\n");
-	// Art.doWrite(0, "0, 1 > " + ask([0, 1]).join(", ") + "\n");
-	// Art.doWrite(0, "1, 0 > " + ask([1, 0]).join(", ") + "\n");
-	// Art.doWrite(0, "1, 1 > " + ask([1, 1]).join(", ") + "\n");
+	sanityCheck();
 	
 };
+
+function sanityCheck () {
+	
+	Art.doWrite(0, "\n\n");
+	Art.doWrite(0, "0, 0 > " + ask([0, 0])[0].toFixed(2) + "\n");
+	Art.doWrite(0, "0, 1 > " + ask([0, 1])[0].toFixed(2) + "\n");
+	Art.doWrite(0, "1, 0 > " + ask([1, 0])[0].toFixed(2) + "\n");
+	Art.doWrite(0, "1, 1 > " + ask([1, 1])[0].toFixed(2) + "\n");
+	
+}
+
+function shannonFromData (data, options, base) {
+	
+	var counts = [];
+	
+	for (var a = 0; a < options; a++) {
+		
+		counts.push(0);
+		
+	}
+	
+	for (var a = 0; a < data.length; a++) {
+		
+		counts[data[a]]++;
+		
+	}
+	
+	var shannonEntropy = 0;
+	
+	for (var a = 0; a < possibleStates; a++) {
+		
+		if (counts[a] == 0) continue;
+		
+		shannonEntropy -= (counts[a] / data.length) * (Math.log(counts[a] / data.length) / Math.log(base));
+		
+	}
+	
+	return shannonEntropy;
+	
+}
+
+var dat = [];
+
+for (var a = 0; a < 1000; a++) {
+	
+	dat.push(Math.random() < 0.5);
+	
+}
+
+console.log(shannonFromData(dat));
