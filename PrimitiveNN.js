@@ -355,7 +355,7 @@ function shannonFromData (data, options, base) {
 	
 	var shannonEntropy = 0;
 	
-	for (var a = 0; a < possibleStates; a++) {
+	for (var a = 0; a < options; a++) {
 		
 		if (counts[a] == 0) continue;
 		
@@ -369,10 +369,11 @@ function shannonFromData (data, options, base) {
 
 var dat = [];
 
-for (var a = 0; a < 1000; a++) {
+for (var a = 0; a < 100000; a++) {
 	
-	dat.push(Math.random() < 0.5);
+	// dat.push(Math.random() < 0.5 ? 1 : 0);
+	dat.push(Math.floor(Math.random() * 32));
 	
 }
 
-console.log(shannonFromData(dat));
+console.log(shannonFromData(dat, 32, 10));
