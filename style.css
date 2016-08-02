@@ -16,11 +16,11 @@ body {
 	padding: 50px;
 	box-sizing: border-box;
 	
-	background: #333;
+	background: #fff;
 	
 	white-space: pre;
 	text-align: left;
 	font: 20px monospace;
-	color: #cf6;
+	color: #000;
 	
 }

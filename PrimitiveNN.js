@@ -4,9 +4,10 @@ var layerSizesWithBias = [];
 var possibleStates = 0;
 
 // parameters
-var runs = 20;
+var runs = 200;
+var numGraphLines = 20;
 var shannonInterval = 100;
-var iterations = 10000;
+var iterations = 20000;
 var learningRate = 0.1;
 var layerSizes = [2, 2, 1];
 var normalised = false;
@@ -284,12 +285,13 @@ Art.ready = function () {
 		
 	}
 	
-	Art.canvas.strokeStyle = "#09f";
+	sanityCheck();
+	
+	Art.canvas.strokeStyle = "#ccc";
 	Art.canvas.lineWidth = 1;
 	Art.canvas.beginPath();
 	Art.canvas.rect(0.5, 0.5, Art.width - 1, Art.height - 1);
 	Art.canvas.stroke();
-	Art.canvas.strokeStyle = "#fff";
 	
 	var x = [];
 	var maxValue = -1e10;
@@ -304,7 +306,7 @@ Art.ready = function () {
 		
 	}
 	
-	Art.canvas.strokeStyle = "#fff";
+	Art.canvas.strokeStyle = "#000";
 	Art.canvas.beginPath();
 	
 	for (var a = 0; a < x.length; a++) {
@@ -321,9 +323,18 @@ Art.ready = function () {
 		
 	}
 	
+	Art.canvas.fillStyle = "#ccc";
+	
+	for (var a = 0; a < numGraphLines; a++) {
+		
+		if (a % 2 == 0) continue;
+		
+		Art.canvas.fillRect(0, (a / numGraphLines) * Art.height, Art.width, Art.height / numGraphLines);
+		
+	}
+	
 	Art.canvas.stroke();
 	
-	sanityCheck();
 	
 };
 
@@ -337,43 +348,43 @@ function sanityCheck () {
 	
 }
 
-function shannonFromData (data, options, base) {
-	
-	var counts = [];
-	
-	for (var a = 0; a < options; a++) {
-		
-		counts.push(0);
-		
-	}
-	
-	for (var a = 0; a < data.length; a++) {
-		
-		counts[data[a]]++;
-		
-	}
-	
-	var shannonEntropy = 0;
-	
-	for (var a = 0; a < options; a++) {
-		
-		if (counts[a] == 0) continue;
-		
-		shannonEntropy -= (counts[a] / data.length) * (Math.log(counts[a] / data.length) / Math.log(base));
-		
-	}
-	
-	return shannonEntropy;
-	
-}
-
-var dat = [];
-
-for (var a = 0; a < 100000; a++) {
-	
-	// dat.push(Math.random() < 0.5 ? 1 : 0);
-	dat.push(Math.floor(Math.random() * 32));
-	
-}
-
-console.log(shannonFromData(dat, 32, 10));
+// function shannonFromData (data, options, base) {
+// 	
+// 	var counts = [];
+// 	
+// 	for (var a = 0; a < options; a++) {
+// 		
+// 		counts.push(0);
+// 		
+// 	}
+// 	
+// 	for (var a = 0; a < data.length; a++) {
+// 		
+// 		counts[data[a]]++;
+// 		
+// 	}
+// 	
+// 	var shannonEntropy = 0;
+// 	
+// 	for (var a = 0; a < options; a++) {
+// 		
+// 		if (counts[a] == 0) continue;
+// 		
+// 		shannonEntropy -= (counts[a] / data.length) * (Math.log(counts[a] / data.length) / Math.log(base));
+// 		
+// 	}
+// 	
+// 	return shannonEntropy;
+// 	
+// }
+// 
+// var dat = [];
+// 
+// for (var a = 0; a < 100000; a++) {
+// 	
+// 	// dat.push(Math.random() < 0.5 ? 1 : 0);
+// 	dat.push(Math.floor(Math.random() * 32));
+// 	
+// }
+// 
+// console.log(shannonFromData(dat, 32, 10));
