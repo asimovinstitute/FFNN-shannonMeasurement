@@ -4,7 +4,7 @@ var layerSizesWithBias = [];
 var possibleStates = 0;
 
 // parameters
-var runs = 10;
+var runs = 1;
 var numGraphLines = 20;
 var shannonInterval = 200;
 var iterations = 50000;
@@ -205,8 +205,9 @@ function storeSample () {
 	var value = 0;
 	var c = -1;
 
-	for (var a = 1; a < cells.length; a++) {
-		
+	//for (var a = 1; a < cells.length; a++) {
+	for (var a = 2; a < 3; a++) {
+
 		for (var b = 0; b < (cells[a].length - (a == cells.length - 1 ? 0 : 1)); b++) {
 
 			c++;
